@@ -1,0 +1,48 @@
+name: Deploy BTC signer lambda (dev)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build_and_deploy:
+    runs-on: ubuntu-latest
+
+    if: github.ref == 'refs/heads/dev'
+
+    env:
+      AWS_REGION: ${{ secrets.AWS_REGION }}
+      AWS_SECRET_ID: ${{ secrets.AWS_SECRET_ID_DEV }}
+      LAMBDA_FUNCTION_NAME: btc-signer-lambda-dev
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Build (build.sh)
+        run: |
+          chmod +x ./build.sh
+          ./build.sh
+
+      - name: Deploy to AWS Lambda (dev)
+        run: |
+          test -f function.zip
+
+          aws lambda update-function-code \
+            --function-name "$LAMBDA_FUNCTION_NAME" \
+            --zip-file "fileb://function.zip"
+
+          aws lambda update-function-configuration \
+            --function-name "$LAMBDA_FUNCTION_NAME" \
+            --environment "Variables={AWS_SECRET_ID=${AWS_SECRET_ID}}"
