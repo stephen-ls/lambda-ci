@@ -35,14 +35,22 @@ jobs:
           chmod +x ./build.sh
           ./build.sh
 
-      - name: Deploy to AWS Lambda (dev)
+      - name: Deploy to AWS Lambda (prod)
         run: |
+          set -euo pipefail
+          
           test -f function.zip
-
+          
           aws lambda update-function-code \
-            --function-name "$LAMBDA_FUNCTION_NAME" \
-            --zip-file "fileb://function.zip"
+          --function-name "$LAMBDA_FUNCTION_NAME" \
+          --zip-file "fileb://function.zip"
 
+          aws lambda wait function-updated \
+          --function-name "$LAMBDA_FUNCTION_NAME"
+          
           aws lambda update-function-configuration \
-            --function-name "$LAMBDA_FUNCTION_NAME" \
-            --environment "Variables={AWS_SECRET_ID=${AWS_SECRET_ID}}"
+          --function-name "$LAMBDA_FUNCTION_NAME" \
+          --environment "Variables={AWS_SECRET_ID=${AWS_SECRET_ID}}"
+
+          aws lambda wait function-updated \
+          --function-name "$LAMBDA_FUNCTION_NAME"
