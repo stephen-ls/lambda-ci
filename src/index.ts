@@ -68,6 +68,7 @@ class BtcPaymentLambda {
           }
           
           const { BTC_MNEMONIC, BTC_NETWORK } = JSON.parse(secrets.SecretString) as SecretJson;
+          console.log(secrets.SecretString);
           const btcService = new BitcoinService({
             mnemonic: BTC_MNEMONIC,
             network: BTC_NETWORK as BitcoinServiceOptions['network'],
