@@ -5,7 +5,7 @@ echo "🧹 Cleaning..."
 rm -rf dist function.zip node_modules
 
 echo "🔨 Building TypeScript..."
-npm ci && npm run build
+npm i && npm run build
 
 echo "📦 Packaging..."
 

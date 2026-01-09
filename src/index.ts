@@ -2,13 +2,11 @@ import {
   BitcoinService,
   BitcoinServiceOptions,
 } from 'src/btc.service';
-import { ActionType } from 'src/types/action-type.enum';
 import { PayBatchParams } from 'src/types/pay-batch-params.type';
 import { PayBatchResponse } from 'src/types/pay-batch-response.type';
 import { GetSecretValueCommand, SecretsManagerClient } from '@aws-sdk/client-secrets-manager';
 
 type CommandPayload = {
-  action: ActionType;
   data: unknown;
 };
 
@@ -50,40 +48,34 @@ class BtcPaymentLambda {
   }
 
   public async handler(event: CommandPayload): Promise<CommandResponse> {
-    const { action, data } = event;
+    const { data } = event;
 
-    console.log('Action:', action);
+    console.log('An attempt to create and sign transaction at', new Date().toISOString());
 
     try {
-      switch (action) {
-        case ActionType.btcPayBatch:
-          const secrets = await this.secretsClient.send(
-            new GetSecretValueCommand({ SecretId: this.secretId })
-          );
-          
-          console.log('Secrets are received')
-          
-          if (!secrets.SecretString) {
-            return { error: 'SecretString is empty, expected JSON in SecretString' }
-          }
-          
-          const { BTC_MNEMONIC, BTC_NETWORK } = JSON.parse(secrets.SecretString) as SecretJson;
-          const btcService = new BitcoinService({
-            mnemonic: BTC_MNEMONIC,
-            network: BTC_NETWORK as BitcoinServiceOptions['network'],
-          });
-          
-          console.log('BTC service is initialized');
-
-          const payBatchResult = btcService.createAndSignTransaction(
-            data as PayBatchParams,
-          );
-
-          return { result: payBatchResult };
-
-        default:
-          return { error: `Unknown action: ${action}` }
+      const secrets = await this.secretsClient.send(
+        new GetSecretValueCommand({ SecretId: this.secretId })
+      );
+      
+      console.log('Secrets are received')
+      
+      if (!secrets.SecretString) {
+        return { error: 'SecretString is empty, expected JSON in SecretString' }
       }
+      
+      const { BTC_MNEMONIC, BTC_NETWORK } = JSON.parse(secrets.SecretString) as SecretJson;
+      const btcService = new BitcoinService({
+        mnemonic: BTC_MNEMONIC,
+        network: BTC_NETWORK as BitcoinServiceOptions['network'],
+      });
+      
+      console.log('BTC service is initialized');
+      
+      const payBatchResult = btcService.createAndSignTransaction(
+        data as PayBatchParams,
+      );
+      
+      return { result: payBatchResult };
     } catch (error) {
       return { error: error.message || 'Unknown error' };
     }

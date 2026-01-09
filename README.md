@@ -6,16 +6,20 @@ Run in terminal:
 ```
 npm i && cp .env.sample .env
 ```
+then update env variables.
 
-then update env variables. 
-
-AWS_... variables can be skipped in case of local testing. If you want ot test real lambda, define a secret and put 
+If you want ot test real lambda, define a secret on AWS and put 
 ```
 BTC_NETWORK=
 BTC_MNEMONIC=
 ```
 
-in the secret, also update `AWS_SECRET_ID` with secret name  
+in the secret, also update `AWS_SECRET_ID` with secret name
+
+In case of using of localstack define:
+```
+AWS_ENDPOINT_URL='http://localhost:4566'
+```
 
 ## Production launch:
 
