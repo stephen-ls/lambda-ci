@@ -1,40 +1,28 @@
 # Lambda function for creating and signing BTC transactions
 
-## Development installation
+## Installation and launch
 
 Run in terminal:
 ```
-npm i && cp .env.sample .env
+npm i
 ```
-then update env variables.
 
-If you want ot test real lambda, define a secret on AWS and put 
+Then define a secret on AWS and put variables:
 ```
 BTC_NETWORK=
 BTC_MNEMONIC=
 ```
 
-in the secret, also update `AWS_SECRET_ID` with secret name
+Then add the following to env:
+```
+AWS_REGION=
+AWS_ACCESS_KEY_ID=
+AWS_SECRET_ACCESS_KEY=
+AWS_SECRET_ID=
+```
 
-In case of using of localstack define:
+For github actions define 2 secrets separately instead of `AWS_SECRET_ID`:
 ```
-AWS_ENDPOINT_URL='http://localhost:4566'
+AWS_SECRET_ID_DEV=
+AWS_SECRET_ID_PROD=
 ```
-
-## Production launch:
-
-Define a secret on AWS and put variables:
-
-```
-BTC_NETWORK=
-BTC_MNEMONIC=
-```
-there. Then add the following: 
-```
-AWS_REGION=<region>
-AWS_ACCESS_KEY_ID=<aws access key id>
-AWS_SECRET_ACCESS_KEY=< aws secret access key>
-AWS_SECRET_ID_DEV=<dev_secret_name>
-AWS_SECRET_ID_PROD=<prod_secret_name>
-```
-on github actions secrets
