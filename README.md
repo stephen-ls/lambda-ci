@@ -1,4 +1,4 @@
-# Lambda function for creating and signing BTC transactions
+# Lambda function for creating and signing transactions
 
 ## Installation and launch
 
@@ -23,6 +23,20 @@ AWS_SECRET_ID=
 
 For github actions define 2 secrets separately instead of `AWS_SECRET_ID`:
 ```
-AWS_SECRET_ID_DEV=
-AWS_SECRET_ID_PROD=
+AWS_BTC_SECRET_ID_DEV=
+AWS_BTC_SECRET_ID_PROD=
+```
+
+## Testing
+
+For testing define also in env:
+```
+BTC_MNEMONIC=
+```
+with some test wallet mnemonic
+
+For github actions define instead:
+```
+BTC_MNEMONIC_TEST=
+AWS_SECRET_ID_TEST=
 ```

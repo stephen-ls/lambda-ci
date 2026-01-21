@@ -11,8 +11,8 @@ jobs:
 
     env:
       AWS_REGION: ${{ secrets.AWS_REGION }}
-      AWS_SECRET_ID: ${{ secrets.AWS_SECRET_ID_PROD }}
-      LAMBDA_FUNCTION_NAME: btc-signer-lambda-prod
+      AWS_SECRET_ID: ${{ secrets.AWS_BTC_SECRET_ID_PROD }}
+      LAMBDA_FUNCTION_NAME: ${{ secrets.BTC_LAMBDA_NAME_PROD }}
 
     steps:
       - name: Checkout

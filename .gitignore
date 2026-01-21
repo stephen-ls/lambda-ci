@@ -1,13 +1,14 @@
-/dist
+btc/dist
 
-/node_modules
-/libs/*/node_modules
+btc/node_modules
 npm-debug.log*
 
-.env
+btc/.env
 
 .vscode/*
 .idea/
 .DS_Store
 
-function.zip
+btc/function.zip
+
+.cursor/
