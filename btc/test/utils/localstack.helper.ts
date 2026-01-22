@@ -23,6 +23,9 @@ export class LocalStackHelper {
 
   async createSecret(secretId: string, secretValue: object): Promise<void> {
     try {
+      console.log('secretId', secretId)
+      console.log('secretValue', secretValue)
+      console.log(JSON.stringify(secretValue))
       await this.secretsClient.send(
         new CreateSecretCommand({
           Name: secretId,

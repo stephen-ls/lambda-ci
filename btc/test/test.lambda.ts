@@ -15,6 +15,7 @@ export class TestLambda {
   }
 
   async init(secretConfig: TestSecretConfig): Promise<void> {
+    console.log('secretConfig', secretConfig)
     await this.localStackHelper.createSecret(this.secretId, secretConfig);
 
     process.env.AWS_ENDPOINT_URL = this.localStackHelper.getEndpoint();
