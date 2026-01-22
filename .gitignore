@@ -1,0 +1,14 @@
+btc/dist
+
+btc/node_modules
+npm-debug.log*
+
+btc/.env
+
+.vscode/*
+.idea/
+.DS_Store
+
+btc/function.zip
+
+.cursor/
