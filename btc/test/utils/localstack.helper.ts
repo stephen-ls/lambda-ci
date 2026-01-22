@@ -13,10 +13,10 @@ export class LocalStackHelper {
     this.endpoint = endpoint;
     this.secretsClient = new SecretsManagerClient({
       endpoint: endpoint,
-      region: process.env.AWS_REGION || 'eu-central-1',
+      region: process.env.AWS_REGION,
       credentials: {
-        accessKeyId: process.env.AWS_ACCESS_KEY_ID || 'test',
-        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || 'test',
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
       },
     });
   }
