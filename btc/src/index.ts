@@ -46,6 +46,7 @@ class BtcPaymentLambda {
     console.log('An attempt to create and sign transaction at', new Date().toISOString());
 
     try {
+      console.log('this.secretId', this.secretId);
       const secrets = await this.secretsClient.send(
         new GetSecretValueCommand({ SecretId: this.secretId })
       );
@@ -70,6 +71,7 @@ class BtcPaymentLambda {
       
       return { result: payBatchResult };
     } catch (error) {
+      console.log(error);
       return { error: error instanceof PaymentError ? error.message : 'Unknown error' };
     }
   }

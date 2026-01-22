@@ -59,9 +59,8 @@ describe('BTC Lambda (e2e)', () => {
 
   beforeAll(async () => {
     testLambda = new TestLambda(endpoint);
-    console.log('process.env.BTC_MNEMONIC', process.env.BTC_MNEMONIC)
     await testLambda.init({
-      BTC_MNEMONIC: 'indoor garden winner mirror reveal lunar giggle oven nothing antique bring creek',
+      BTC_MNEMONIC: process.env.BTC_MNEMONIC,
       BTC_NETWORK: 'testnet',
     });
   });
