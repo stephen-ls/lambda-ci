@@ -31,11 +31,13 @@ jobs:
           aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Build (build.sh)
+        working-directory: ./btc-signer
         run: |
           chmod +x ./build.sh
           ./build.sh
 
       - name: Deploy to AWS Lambda (dev)
+        working-directory: ./btc-signer
         run: |
           set -euo pipefail
   

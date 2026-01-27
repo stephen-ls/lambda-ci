@@ -19,11 +19,11 @@ jobs:
           cache-dependency-path: btc/package-lock.json
 
       - name: Install dependencies
-        working-directory: ./btc
+        working-directory: ./btc-signer
         run: npm ci
 
       - name: Run E2E tests
-        working-directory: ./btc
+        working-directory: ./btc-signer
         run: npm run test:e2e
         env:
           NODE_ENV: test

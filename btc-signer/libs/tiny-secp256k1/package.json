@@ -1,0 +1,38 @@
+{
+  "name": "tiny-secp256k1",
+  "version": "2.2.4",
+  "description": "A tiny secp256k1 JS",
+  "homepage": "https://github.com/bitcoinjs/tiny-secp256k1#readme",
+  "bugs": {
+    "url": "https://github.com/bitcoinjs/tiny-secp256k1/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bitcoinjs/tiny-secp256k1.git"
+  },
+  "license": "MIT",
+  "type": "module",
+  "main": "./lib/cjs/index.cjs",
+  "exports": {
+    ".": {
+      "node": {
+        "module": "./lib/index.js",
+        "require": "./lib/cjs/index.cjs",
+        "import": "./lib/index.js"
+      },
+      "browser": "./lib/index.js",
+      "default": "./lib/index.js"
+    }
+  },
+  "browser": {
+    "./lib/wasm_loader.js": "./lib/wasm_loader.browser.js",
+    "./lib/rand.js": "./lib/rand.browser.js"
+  },
+  "types": "./lib/index.d.ts",
+  "files": [
+    "lib"
+  ],
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}

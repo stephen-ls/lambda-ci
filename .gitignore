@@ -1,14 +1,14 @@
-btc/dist
+btc-signer/dist
 
-btc/node_modules
+btc-signer/node_modules
 npm-debug.log*
 
-btc/.env
+btc-signer/.env
 
 .vscode/*
 .idea/
 .DS_Store
 
-btc/function.zip
+btc-signer/function.zip
 
 .cursor/
