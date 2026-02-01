@@ -22,15 +22,15 @@ Run in terminal:
 ```
 The script creates a zip can be used for the lambda codebase update (via cli for instance).
 
-Then update the secret on AWS with variables using mnemonic of your BTC wallet and network (can be `testnet` or `mainnet`):
+Then update the secret on AWS with variables using mnemonic of your BTC wallet:
 ```
-BTC_NETWORK=
 BTC_MNEMONIC=
 ```
 
-Then update lambda config with the following env variables using the existing secret id:
+Then update lambda config with the following env variables using the existing secret id, while network can be `testnet` or `mainnet`:
 ```
 AWS_SECRET_ID=
+BTC_NETWORK=
 ```
 
 ### Adding or updating vendor dependencies
@@ -42,18 +42,9 @@ Add or update the desired library in the `package.vendor.json` file, then run:
 
 ### Testing
 
-Run in terminal:
+Make sure, Docker is working. Then run in terminal:
 ```bash
-npm i
-```
-
-Create an `.env` file from the example.
-```bash
-cp .env.example .env
-```
-and fill in the values of the AWS credentials. Then run:
-```bash
-npm run test:e2e
+npm i && npm run test && npm run test-e2e
 ```
 
 ### Creating BTC wallet in testnet

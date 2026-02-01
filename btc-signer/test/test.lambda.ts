@@ -1,9 +1,6 @@
+import * as bip39 from 'bip39';
 import { LocalStackHelper } from './utils/localstack.helper';
 
-export type TestSecretConfig = {
-  BTC_MNEMONIC: string;
-  BTC_NETWORK: 'mainnet' | 'testnet';
-};
 
 export class TestLambda {
   private localStackHelper: LocalStackHelper;
@@ -14,8 +11,10 @@ export class TestLambda {
     this.secretId = process.env.AWS_SECRET_ID;
   }
 
-  async init(secretConfig: TestSecretConfig): Promise<void> {
-    await this.localStackHelper.createSecret(this.secretId, secretConfig);
+  async init(mnemonic: string): Promise<void> {
+    await this.localStackHelper.createSecret(this.secretId, {
+      BTC_MNEMONIC: mnemonic,
+    });
     process.env.AWS_ENDPOINT_URL = this.localStackHelper.getEndpoint();
   }
 

@@ -28,8 +28,3 @@ jobs:
         env:
           NODE_ENV: test
           DOCKER_HOST: unix:///var/run/docker.sock
-          AWS_REGION: ${{ secrets.AWS_REGION }}
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_SECRET_ID: ${{ secrets.AWS_SECRET_ID_TEST }}
-          BTC_MNEMONIC: ${{ secrets.BTC_MNEMONIC_TEST }}

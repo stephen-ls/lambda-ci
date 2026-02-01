@@ -13,7 +13,6 @@ import * as ecc from 'tiny-secp256k1';
 
 const BTC_CONFIG = {
   CHANGE_DUST_LIMIT_SAT: 294,
-  MIN_PAYMENT_SAT: 546,
   FALLBACK_FEE_RATES: {
     mainnet: 5,
     testnet: 1,
@@ -28,9 +27,11 @@ const BTC_CONFIG = {
   },
 } as const;
 
+export type Network = 'mainnet' | 'testnet';
+
 export type BitcoinServiceOptions = {
   mnemonic: string;
-  network: 'mainnet' | 'testnet';
+  network: Network;
 };
 
 export class BitcoinService {
@@ -64,14 +65,11 @@ export class BitcoinService {
       }
 
       let totalAmount = 0;
-      
-      console.log('Validation start!');
+
       for (const recipient of recipients) {
         this.validatePayParams(recipient.address, recipient.amount);
         totalAmount += recipient.amount;
       }
-
-      console.log('Validated!');
       
       const { change, fee } = this.estimateChangeAndFeeOrFail(params);
 
@@ -186,25 +184,10 @@ export class BitcoinService {
   }
 
   private validatePayParams(address: string, amountInSat: number): void {
-    if (!address || !amountInSat) {
-      throw new PaymentError('Invalid payment parameters');
-    }
-
     try {
       bitcoin.address.toOutputScript(address, this.network);
     } catch {
       throw new PaymentError('Invalid Bitcoin address');
-    }
-
-    if (amountInSat <= 0) {
-      throw new PaymentError('Amount must be positive');
-    }
-
-    if (amountInSat < BTC_CONFIG.MIN_PAYMENT_SAT) {
-      throw new PaymentError(`Amount is below the minimum payment threshold`, {
-        requestedSat: amountInSat,
-        minimumSat: BTC_CONFIG.MIN_PAYMENT_SAT,
-      });
     }
   }
 

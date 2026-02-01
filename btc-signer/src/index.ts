@@ -1,48 +1,42 @@
 import {
   BitcoinService,
-  BitcoinServiceOptions,
+  BitcoinServiceOptions, Network,
 } from 'src/btc.service';
 import { PayBatchParams } from 'src/types/pay-batch-params.type';
 import { PayBatchResponse } from 'src/types/pay-batch-response.type';
 import { GetSecretValueCommand, SecretsManagerClient } from '@aws-sdk/client-secrets-manager';
 import { PaymentError } from 'src/errors/payment.error';
+import { validatePayBatchParams } from 'src/validator';
 
 type CommandPayload = {
-  data: unknown;
+  data: PayBatchParams;
 };
 
 type CommandResponse = {
   result?: PayBatchResponse;
-  error?: string;
+  error?: string[];
 };
 
 type SecretJson = {
-  BTC_MNEMONIC: string,
-  BTC_NETWORK: BitcoinServiceOptions['network']
+  BTC_MNEMONIC: string
 };
 
 class BtcPaymentLambda {
   private secretsClient: SecretsManagerClient
-  private secretId: string;
+  private readonly secretId: string;
+  private readonly network: Network;
 
   constructor() {
-    const endpoint = process.env.AWS_ENDPOINT_URL;
-    const config = endpoint ? {
-      region: process.env.AWS_REGION,
-      credentials: {
-        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
-      },
-      endpoint
-    } : { region: process.env.AWS_REGION };
-
-    this.secretsClient = new SecretsManagerClient(config);
+    this.secretsClient = new SecretsManagerClient();
     this.secretId = process.env.AWS_SECRET_ID;
+    this.network = process.env.BTC_NETWORK as Network;
   }
 
   public async handler(event: CommandPayload): Promise<CommandResponse> {
     const { data } = event;
-
+    const error = validatePayBatchParams(event.data);
+    if (error) return { error };
+    
     console.log('An attempt to create and sign transaction at', new Date().toISOString());
 
     try {
@@ -50,27 +44,21 @@ class BtcPaymentLambda {
         new GetSecretValueCommand({ SecretId: this.secretId })
       );
       
-      console.log('Secrets are received')
-      
       if (!secrets.SecretString) {
-        return { error: 'SecretString is empty, expected JSON in SecretString' }
+        return { error: ['SecretString is empty, expected JSON in SecretString'] }
       }
       
-      const { BTC_MNEMONIC, BTC_NETWORK } = JSON.parse(secrets.SecretString) as SecretJson;
+      const { BTC_MNEMONIC } = JSON.parse(secrets.SecretString) as SecretJson;
       const btcService = new BitcoinService({
         mnemonic: BTC_MNEMONIC,
-        network: BTC_NETWORK,
+        network: this.network,
       });
       
-      console.log('BTC service is initialized');
-      
-      const payBatchResult = btcService.createAndSignTransaction(
-        data as PayBatchParams,
-      );
+      const payBatchResult = btcService.createAndSignTransaction(data);
       
       return { result: payBatchResult };
     } catch (error) {
-      return { error: error instanceof PaymentError ? error.message : 'Unknown error' };
+      return { error: [error instanceof PaymentError ? error.message : 'Unknown error'] };
     }
   }
 }

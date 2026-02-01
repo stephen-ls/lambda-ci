@@ -6,12 +6,12 @@ import { handler } from '../../src';
 import { TestLambda } from '../test.lambda';
 import { FeeEstimates, PayBatchParams, PayBatchRecipient, UTXO } from '../../src/types/pay-batch-params.type';
 import {
-  errorResponseSchema,
-  invalidPaymentCases,
+  addressA,
+  addressB,
+  errorResponseSchema, invalidAddress,
   recommendedFees,
   successfulResponseSchema,
   utxos,
-  validPaymentCases
 } from './btc-lambda.utils';
 import { matchers } from 'jest-json-schema';
 import { PaymentError } from '../../src/errors/payment.error';
@@ -55,14 +55,12 @@ expect.extend(matchers);
 
 describe('BTC Lambda (e2e)', () => {
   let testLambda: TestLambda;
-  const endpoint = global.localStackContainer.getConnectionUri();
+  const endpoint = process.env.AWS_ENDPOINT_URL;
+  const mnemonic = bip39.generateMnemonic(128);
 
   beforeAll(async () => {
     testLambda = new TestLambda(endpoint);
-    await testLambda.init({
-      BTC_MNEMONIC: process.env.BTC_MNEMONIC,
-      BTC_NETWORK: 'testnet',
-    });
+    await testLambda.init(mnemonic);
   });
 
   afterAll(async () => {
@@ -70,9 +68,22 @@ describe('BTC Lambda (e2e)', () => {
   });
 
   describe('Successful transaction creation', () => {
-    it.each(validPaymentCases)(
+    it.each([
+      {
+        recipients: [
+          { address: addressA, amount: 10000 }
+        ],
+        scenario: 'a single recipient',
+      },
+      {
+        recipients: [
+          { address: addressA, amount: 10000 },
+          { address: addressB, amount: 20000 }
+        ],
+        scenario: 'multiple recipients'
+      },
+    ])(
       'should create and sign a transaction with $scenario', async ({ recipients }) => {
-        const mnemonic = process.env.BTC_MNEMONIC;
         const expectedWalletAddress = initializeWallet(mnemonic);
         
         const testData: PayBatchParams = {
@@ -119,9 +130,30 @@ describe('BTC Lambda (e2e)', () => {
   });
 
   describe('Error handling', () => {
-    it.each(invalidPaymentCases)(
-      'should return error due to $scenario',
-      async ({ recipients, errorMessage }) => {
+    it('should return error caught by validation function', async () => {
+      const response = await handler({ data: {} });
+      
+      [
+        'recipients must be a non-empty array',
+        'utxos must be a non-empty array',
+        'recommendedFees must be an object'
+      ].forEach(error => expect(response.error).toContain(error));
+    });
+    
+    it.each([
+      {
+        recipients: [{ address: addressA, amount: 100000 }],
+        scenario: 'insufficient funds',
+        error: 'Insufficient funds for batch payment'
+      },
+      {
+        recipients: [{ address: invalidAddress, amount: 100000 }],
+        scenario: 'invalid address',
+        error: 'Invalid Bitcoin address'
+      },
+    ])(
+      'should return error due to blockchain specific scenario: $scenario',
+      async ({ recipients, error }) => {
         const testData: PartialPayBatchParams = {
           recipients,
           utxos,
@@ -130,7 +162,7 @@ describe('BTC Lambda (e2e)', () => {
 
         const response = await handler({ data: testData });
         expect(response).toMatchSchema(errorResponseSchema);
-        expect(response.error).toBe(errorMessage);
+        expect(response.error).toContain(error);
       }
     )
   });
