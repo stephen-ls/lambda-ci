@@ -33,5 +33,18 @@
   "files": [
     "src",
     "types"
-  ]
+  ],
+  "dependencies": {
+    "@noble/hashes": "^1.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "11.11.6",
+    "node-fetch": "2.6.9",
+    "nyc": "^15.0.0",
+    "prettier": "1.16.4",
+    "proxyquire": "^1.7.10",
+    "tape": "^4.13.2",
+    "tslint": "^6.1.0",
+    "typescript": "3.3.4000"
+  }
 }

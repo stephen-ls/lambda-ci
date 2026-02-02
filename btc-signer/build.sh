@@ -1,22 +1,29 @@
 #!/bin/bash
-set -e
+set -euo pipefail
 
 echo "🧹 Cleaning..."
 rm -rf dist function.zip node_modules
 
+echo "🔎 Checking vendored libs..."
+if [ ! -d "libs" ] || [ -z "$(ls -A libs 2>/dev/null)" ]; then
+	echo "❌ Error: libs/ folder missing or empty. Run ./vendor-libs.sh first" >&2
+	exit 1
+fi
+
 echo "🔨 Building TypeScript..."
-npm i && npm run build
+npm ci --ignore-scripts
+cp -R libs/* node_modules/
+npm run build
 
 echo "📦 Packaging..."
 
-cp package.json dist/
-cd dist && npm i --omit=dev
+cp package.json package-lock.json dist/
+cd dist && npm ci --omit=dev --ignore-scripts
 cp -R ../libs/* node_modules/
 
 echo "🧹 Cleaning up unnecessary files..."
 # Documentation and config files
 find node_modules -name "*.md" -delete 2>/dev/null || true
-find node_modules -name "LICENSE*" -delete 2>/dev/null || true
 find node_modules -name "CHANGELOG*" -delete 2>/dev/null || true
 find node_modules -name ".npmignore" -delete 2>/dev/null || true
 find node_modules -name ".eslintrc*" -delete 2>/dev/null || true

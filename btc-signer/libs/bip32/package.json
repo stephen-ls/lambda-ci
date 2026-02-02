@@ -46,6 +46,23 @@
   "files": [
     "src"
   ],
+  "dependencies": {
+    "@noble/hashes": "^1.2.0",
+    "@scure/base": "^1.1.1",
+    "uint8array-tools": "^0.0.8",
+    "valibot": "^0.37.0",
+    "wif": "^5.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "18.x",
+    "@types/tape": "^5.6.4",
+    "c8": "^10.1.2",
+    "prettier": "1.16.4",
+    "tape": "^5.3.0",
+    "tiny-secp256k1": "^2.2.1",
+    "tslint": "^6.1.0",
+    "typescript": "^5.0.4"
+  },
   "author": "Daniel Cousens",
   "license": "MIT",
   "bugs": {

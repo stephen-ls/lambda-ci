@@ -1,44 +1,45 @@
 #!/bin/bash
 # Creates vendored libs folder with BTC dependencies basing on a vendor package file
 
-set -e
+set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 cd "$SCRIPT_DIR"
 
-echo "🧹 Cleaning..."
-rm -rf libs node_modules
+VENDOR_PKG="$SCRIPT_DIR/package.vendor.json"
+VENDOR_LOCK="$SCRIPT_DIR/package.vendor-lock.json"
 
-echo "� Installing vendor dependencies..."
-mv package.json package.json.bak
-mv package-lock.json package-lock.json.bak
-cp package.vendor.json package.json
-npm install --install-strategy=hoisted
-mv package.json.bak package.json
-mv package-lock.json.bak package-lock.json
+TMP_DIR=""
+cleanup() {
+  if [ -n "${TMP_DIR}" ] && [ -d "${TMP_DIR}" ]; then
+    rm -rf "${TMP_DIR}"
+  fi
+}
+trap cleanup EXIT
+
+echo "🧹 Cleaning..."
+rm -rf libs
+
+echo "📦 Installing vendor dependencies..."
+TMP_DIR="$(mktemp -d)"
+cp "$VENDOR_PKG" "$TMP_DIR/package.json"
+
+if [ -f "$VENDOR_LOCK" ]; then
+  cp "$VENDOR_LOCK" "$TMP_DIR/package-lock.json"
+  (cd "$TMP_DIR" && npm ci --ignore-scripts)
+else
+  (cd "$TMP_DIR" && npm install --ignore-scripts)
+  cp "$TMP_DIR/package-lock.json" "$VENDOR_LOCK"
+  echo "🔒 Created $VENDOR_LOCK (commit this for reproducible updates)."
+fi
 
 echo "📁 Moving to libs folder..."
 mkdir -p libs
-mv node_modules/* libs/
-rm -rf node_modules
-
-echo "🔧 Removing dependency declarations from vendored libs..."
-find libs -name "package.json" -type f | while read -r pkg; do
-  node -e "
-    const fs = require('fs');
-    const p = JSON.parse(fs.readFileSync('$pkg', 'utf8'));
-    delete p.dependencies;
-    delete p.peerDependencies;
-    delete p.devDependencies;
-    delete p.optionalDependencies;
-    fs.writeFileSync('$pkg', JSON.stringify(p, null, 2) + '\n');
-  "
-done
+cp -R "$TMP_DIR/node_modules"/* libs/
 
 echo "🧹 Cleaning up unnecessary files..."
 # Documentation and config files
 find libs -name "*.md" -delete 2>/dev/null || true
-find libs -name "LICENSE*" -delete 2>/dev/null || true
 find libs -name "CHANGELOG*" -delete 2>/dev/null || true
 find libs -name ".npmignore" -delete 2>/dev/null || true
 find libs -name ".eslintrc*" -delete 2>/dev/null || true

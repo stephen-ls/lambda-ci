@@ -34,5 +34,11 @@
     "test": "npm run standard && npm run unit",
     "standard": "standard",
     "unit": "node test/*.js"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "nyc": "^13.1.0",
+    "standard": "*",
+    "tape": "^4.6.1"
   }
 }
