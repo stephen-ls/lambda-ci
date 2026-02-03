@@ -8,7 +8,7 @@ export class TestLambda {
 
   constructor(endpoint: string) {
     this.localStackHelper = new LocalStackHelper(endpoint);
-    this.secretId = process.env.AWS_SECRET_ID;
+    this.secretId = process.env.BTC_SECRET_ID;
   }
 
   async init(mnemonic: string): Promise<void> {

@@ -132,12 +132,9 @@ describe('BTC Lambda (e2e)', () => {
   describe('Error handling', () => {
     it('should return error caught by validation function', async () => {
       const response = await handler({ data: {} });
-      
-      [
-        'recipients must be a non-empty array',
-        'utxos must be a non-empty array',
-        'recommendedFees must be an object'
-      ].forEach(error => expect(response.error).toContain(error));
+      ['recipients', 'utxos', 'recommendedFees'].forEach(substring => {
+        expect(response.error.some(str => str.includes(substring))).toBe(true);
+      })
     });
     
     it.each([

@@ -28,7 +28,7 @@ class BtcPaymentLambda {
 
   constructor() {
     this.secretsClient = new SecretsManagerClient();
-    this.secretId = process.env.AWS_SECRET_ID;
+    this.secretId = process.env.BTC_SECRET_ID;
     this.network = process.env.BTC_NETWORK as Network;
   }
 

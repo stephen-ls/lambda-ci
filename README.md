@@ -29,7 +29,7 @@ BTC_MNEMONIC=
 
 Then update lambda config with the following env variables using the existing secret id, while network can be `testnet` or `mainnet`:
 ```
-AWS_SECRET_ID=
+BTC_SECRET_ID=
 BTC_NETWORK=
 ```
 
@@ -44,7 +44,7 @@ Add or update the desired library in the `package.vendor.json` file, then run:
 
 Make sure, Docker is working. Then run in terminal:
 ```bash
-npm i && npm run test && npm run test-e2e
+npm i && npm run test && npm run test:e2e
 ```
 
 ### Creating BTC wallet in testnet

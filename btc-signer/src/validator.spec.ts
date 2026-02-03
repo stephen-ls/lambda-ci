@@ -1,236 +1,231 @@
-import {
-  isCondition,
-  isObject,
-  isNonEmptyString,
-  isInteger,
-  isPositive,
-  isNonEmptyRecordArray,
-  validateRecommendedFees,
-  validateUTXO,
-  validateRecipient,
-  validatePayBatchParams,
-} from './validator';
+import { validatePayBatchParams } from './validator';
 
-describe('isCondition', () => {
-  it.each([
-    {
-      scenario: 'returns null when condition is true',
-      condition: true,
-      error: null,
-    },
-    {
-      scenario: 'returns error array when condition is false',
-      condition: false,
-      error: ['error'],
-    },
-  ])('$scenario', ({ condition, error }) => {
-    expect(isCondition(condition, 'error')).toEqual(error);
-  });
-});
-
-describe('isObject', () => {
-  it('accepts plain object', () => {
-    expect(isObject('data', {})).toBeNull();
-  });
+describe('Validation', () => {
+  const validPayload = {
+    recipients: [{ address: 'tb1qt62p6kt0wnakuxrdcnyz4n2fcdwsgnnneg806q', amount: 1000 }],
+    utxos: [{ txid: 'txid', vout: 0, value: 1000, confirmations: 1 }],
+    recommendedFees: { fastestFee: 10, halfHourFee: 5, hourFee: 3, minimumFee: 1 },
+  } as const;
   
-  it.each([
-    { scenario: 'rejects null', data: null },
-    { scenario: 'rejects array', data: [] },
-    { scenario: 'rejects primitive', data: 1 },
-  ])('$scenario', ({ data }) => {
-    expect(isObject('data', data)).toEqual(['data must be an object']);
-  });
-});
-
-describe('isNonEmptyString', () => {
-  it('accepts non-empty string', () => {
-    expect(isNonEmptyString('key', 'abc')).toBeNull();
-  });
+  const omit = <T extends Record<string, any>, K extends keyof T>(obj: T, key: K) => {
+    const { [key]: _ignored, ...rest } = obj;
+    return rest as Omit<T, K>;
+  };
   
-  it.each([
-    { scenario: 'rejects empty string', data: '' },
-    { scenario: 'rejects whitespace string', data: '   ' },
-    { scenario: 'rejects non-string', data: 1 },
-  ])('$scenario', ({ data }) => {
-    expect(isNonEmptyString('key', data)).toEqual(['key must be an non-empty string']);
-  });
-});
-
-describe('isInteger', () => {
-  it('accepts integer', () => {
-    expect(isInteger('key', 10)).toBeNull();
-  });
+  const expectInvalid = (data: unknown) => {
+    const errors = validatePayBatchParams(data);
+    expect(errors).not.toBeNull();
+    expect(Array.isArray(errors)).toBe(true);
+    expect((errors ?? []).length).toBeGreaterThan(0);
+    return errors as string[];
+  };
   
-  it.each([
-    { scenario: 'rejects float', data: 1.5 },
-    { scenario: 'rejects string', data: '1' },
-  ])('$scenario', ({ data }) => {
-    expect(isInteger('key', data)).toEqual(['key must be an integer']);
-  });
-});
-
-describe('isPositive', () => {
-  it('accepts positive number', () => {
-    expect(isPositive('key', 1)).toBeNull();
-  });
+  const expectValid = (data: unknown) => {
+    expect(validatePayBatchParams(data)).toBeNull();
+  };
   
-  it('accepts zero when includeZero is true', () => {
-    expect(isPositive('key', 0, { includeZero: true })).toBeNull();
-  });
+  const expectHasPath = (errors: string[], path: string) => {
+    expect(errors.some((e) => e.startsWith(`${path}:`))).toBe(true);
+  };
   
-  it.each([
-    { scenario: 'rejects zero by default', data: 0 },
-    { scenario: 'rejects negative number', data: -1 },
-    { scenario: 'rejects non-number', data: '1' },
-  ])('$scenario', ({ data }) => {
-    expect(isPositive('key', data)).toEqual(['key must be a number > 0']);
-  });
-});
-
-describe('isNonEmptyRecordArray', () => {
-  it('accepts non-empty array without validator', () => {
-    expect(isNonEmptyRecordArray('items', [{}])).toBeNull();
-  });
+  const expectHasSomeMessage = (errors: string[], snippet: string) => {
+    expect(errors.some((e) => e.includes(snippet))).toBe(true);
+  };
   
-  it.each([
-    { scenario: 'rejects empty array', data: [] },
-    { scenario: 'rejects non-array', data: {} },
-  ])('$scenario', ({ data }) => {
-    expect(isNonEmptyRecordArray('items', data)).toEqual(['items must be a non-empty array']);
-  });
-  
-  it('fails on first invalid item', () => {
-    const validator = jest.fn()
-      .mockReturnValueOnce(null)
-      .mockReturnValueOnce(['error'])
-      .mockReturnValueOnce(['error 2']);
-    
-    const result = isNonEmptyRecordArray('items', [{}, {}, {}], validator);
-    
-    expect(result).toEqual(['error']);
-    expect(validator).toHaveBeenCalledTimes(2);
-  });
-});
-
-describe('validateRecommendedFees', () => {
-  it('accepts valid fees', () => {
-    expect(validateRecommendedFees({
-      fastestFee: 10,
-      halfHourFee: 5,
-      hourFee: 3,
-      minimumFee: 1,
-    })).toBeNull();
-  });
-  
-  it('rejects non-object', () => {
-    expect(validateRecommendedFees(1)).toEqual(['recommendedFees must be an object']);
-  });
-  
-  it('returns errors for invalid and missed fields', () => {
-    const result = validateRecommendedFees({
-      fastestFee: -1,
-      halfHourFee: 0,
-    });
-    
-    expect(result).toContain('fastestFee must be a number > 0');
-    expect(result).toContain('halfHourFee must be a number > 0');
-    expect(result).toContain('hourFee must be a number > 0');
-    expect(result).toContain('minimumFee must be a number > 0');
-  });
-});
-
-describe('validateUTXO', () => {
-  it('accepts valid utxo', () => {
-    expect(validateUTXO({
-      txid: 'tx',
-      vout: 0,
-      value: 1000,
-      confirmations: 1,
-    })).toBeNull();
-  });
-  
-  it('rejects non-object', () => {
-    expect(validateUTXO(null)).toEqual(['utxo must be an object']);
-  });
-  
-  it('returns errors for invalid and missed fields', () => {
-    const result = validateUTXO({
-      txid: '',
-      vout: -1,
-      confirmations: -1,
-    });
-    
-    expect(result).toContain('txid must be an non-empty string');
-    expect(result).toContain('vout must be a number >= 0');
-    expect(result).toContain('confirmations must be a number >= 0');
-    expect(result).toContain('value must be an integer');
-  });
-});
-
-describe('validateRecipient', () => {
-  it('accepts valid recipient', () => {
-    expect(validateRecipient({
-      address: 'addr',
-      amount: 1000,
-    })).toBeNull();
-  });
-  
-  it.each([
-    {
-      scenario: 'rejects invalid recipient',
-      recipient: { address: '', amount: -1 },
-      errors: [
-        'address must be an non-empty string',
-        'amount must be a number > 0',
-        'amount is below the minimum payment threshold',
-      ]
-    },
-    {
-      scenario: 'rejects recipient with amount less than minimum threshold',
-      recipient: { address: 'tb1qt62p6kt0wnakuxrdcnyz4n2fcdwsgnnneg806q', amount: 100 },
-      errors: ['amount is below the minimum payment threshold' ]
-    },
-    {
-      scenario: 'rejects empty recipient',
-      recipient: {},
-      errors: [
-        'address must be an non-empty string',
-        'amount must be a number > 0',
-        'amount must be an integer'
-      ]
-    }
-  ])('$scenario', ({ recipient, errors }) => {
-    const result = validateRecipient(recipient);
-    errors.forEach(error => expect(result).toContain(error));
-  });
-});
-
-describe('validatePayBatchParams', () => {
   it('accepts valid payload', () => {
-    expect(validatePayBatchParams({
-      recipients: [{ address: 'addr', amount: 1000 }],
-      utxos: [{ txid: 'tx', vout: 0, value: 1000, confirmations: 1 }],
-      recommendedFees: {
-        fastestFee: 10,
-        halfHourFee: 5,
-        hourFee: 3,
-        minimumFee: 1,
+    expectValid(validPayload);
+  });
+  
+  describe('root data payload shape', () => {
+    it.each([
+      { scenario: 'null', data: null },
+      { scenario: 'number', data: 1 },
+      { scenario: 'array', data: [] },
+      { scenario: 'string', data: 'abc' },
+    ])('should reject when data is $scenario', ({ data }) => {
+      expectInvalid(data);
+    });
+  });
+  
+  describe('recipients', () => {
+    it.each([
+      {
+        scenario: 'is missing',
+        payload: omit(validPayload, 'recipients'),
       },
-    })).toBeNull();
-  });
-  
-  it('rejects non-object payload', () => {
-    expect(validatePayBatchParams(null)).toEqual(['data must be an object']);
-  });
-  
-  it('propagates nested errors', () => {
-    const result = validatePayBatchParams({
-      recipients: [],
-      utxos: [],
-      recommendedFees: {},
+      {
+        scenario: 'is object',
+        payload: { ...validPayload, recipients: {} },
+      },
+      {
+        scenario: 'is primitive',
+        payload: { ...validPayload, recipients: 'nope' },
+      },
+      {
+        scenario: 'has no items',
+        payload: { ...validPayload, recipients: [] },
+      },
+    ])('should fail because recipients $scenario', ({ payload }) => {
+      const errors = expectInvalid(payload);
+      expectHasPath(errors, 'recipients');
     });
     
-    expect(result).toContain('recipients must be a non-empty array');
-    expect(result).toContain('utxos must be a non-empty array');
+    it.each([
+      {
+        scenario: 'recipients has primitive item',
+        payload: { ...validPayload, recipients: [1] },
+        path: 'recipients[0]'
+      },
+      {
+        scenario: 'recipients has null item',
+        payload: { ...validPayload, recipients: [null] },
+        path: 'recipients[0]'
+      },
+      {
+        scenario: 'recipients item address is empty string',
+        payload: { ...validPayload, recipients: [{ address: '', amount: 1000 }] },
+        path: 'recipients[0].address'
+      },
+      {
+        scenario: 'recipients item address is not a string',
+        payload: { ...validPayload, recipients: [{ address: 123, amount: 1000 }] },
+        path: 'recipients[0].address'
+      },
+      {
+        scenario: 'recipients item amount below MIN_PAYMENT_SAT',
+        payload: { ...validPayload, recipients: [{ address: 123, amount: 100 }] },
+        path: 'recipients[0].amount'
+      },
+      {
+        scenario: 'recipients item amount is not integer',
+        payload: { ...validPayload, recipients: [{ address: 'addr', amount: 1.5 }] },
+        path: 'recipients[0].amount'
+      },
+      {
+        scenario: 'recipients item amount is not a number',
+        payload: { ...validPayload, recipients: [{ address: 'addr', amount: '1000' }] },
+        path: 'recipients[0].amount'
+      }
+    ])('should fail because $scenario', ({ payload, path }) => {
+      const errors = expectInvalid(payload);
+      expectHasPath(errors, path);
+    });
+    
+    it('should fail because recipients item has missing fields', () => {
+      const errors = expectInvalid({ ...validPayload, recipients: [{}] });
+      expect(errors.some((e) => e.startsWith('recipients[0].'))).toBe(true);
+    });
+  });
+  
+  describe('utxos', () => {
+    it.each([
+      {
+        scenario: 'is missing',
+        payload: omit(validPayload, 'utxos'),
+      },
+      {
+        scenario: 'is object',
+        payload: { ...validPayload, utxos: {} },
+      },
+      {
+        scenario: 'is primitive',
+        payload: { ...validPayload, utxos: 'nope' },
+      },
+      {
+        scenario: 'has no items',
+        payload: { ...validPayload, utxos: [] },
+      },
+    ])('should fail because utxos $scenario', ({ payload }) => {
+      const errors = expectInvalid(payload);
+      expectHasPath(errors, 'utxos');
+    });
+    
+    it.each([
+      {
+        scenario: 'utxos has primitive item',
+        payload: { ...validPayload, utxos: [1] },
+        path: 'utxos[0]'
+      },
+      {
+        scenario: 'utxos has null item',
+        payload: { ...validPayload, utxos: [null] },
+        path: 'utxos[0]'
+      },
+      {
+        scenario: 'utxos item txid is empty string',
+        payload: { ...validPayload, utxos: [{ txid: '', vout: 0, value: 1000, confirmations: 1 }] },
+        path: 'utxos[0].txid'
+      },
+      {
+        scenario: 'utxos item txid is not a string',
+        payload: { ...validPayload, utxos: [{ txid: 123, vout: 0, value: 1000, confirmations: 1 }] },
+        path: 'utxos[0].txid'
+      },
+      {
+        scenario: 'utxos item vout is negative',
+        payload: { ...validPayload, utxos: [{ txid: 'tx', vout: -1, value: 1000, confirmations: 1 }] },
+        path: 'utxos[0].vout'
+      },
+      {
+        scenario: 'utxos item vout is not integer',
+        payload: { ...validPayload, utxos: [{ txid: 'tx', vout: 0.1, value: 1000, confirmations: 1 }] },
+        path: 'utxos[0].vout'
+      },
+      {
+        scenario: 'utxos item confirmations is negative',
+        payload: { ...validPayload, utxos: [{ txid: 'tx', vout: 0, value: 1000, confirmations: -1 }] },
+        path: 'utxos[0].confirmations'
+      },
+      {
+        scenario: 'utxos item confirmations is not integer',
+        payload: { ...validPayload, utxos: [{ txid: 'tx', vout: 0, value: 1000, confirmations: 0.1 }] },
+        path: 'utxos[0].confirmations'
+      },
+      {
+        scenario: 'utxos item value is negative or equal to zero',
+        payload: { ...validPayload, utxos: [{ txid: 'tx', vout: 0, value: 0, confirmations: 2 }] },
+        path: 'utxos[0].value'
+      },
+      {
+        scenario: 'utxos item value is not integer',
+        payload: { ...validPayload, utxos: [{ txid: 'tx', vout: 0, value: 1000.5, confirmations: 2 }] },
+        path: 'utxos[0].value'
+      },
+    ])('should fail because $scenario', ({ payload, path }) => {
+      const errors = expectInvalid(payload);
+      expectHasPath(errors, path);
+    });
+    
+    it('should fail because utxos[0] has missing fields', () => {
+      const errors = expectInvalid({ ...validPayload, utxos: [{ txid: 'tx' }] });
+      expect(errors.some((e) => e.startsWith('utxos[0].'))).toBe(true);
+    });
+  });
+  
+  describe('recommendedFees', () => {
+    it.each([
+      { scenario: 'missing', payload: omit(validPayload, 'recommendedFees') },
+      { scenario: 'primitive', payload: { ...validPayload, recommendedFees: 1 } },
+      { scenario: 'null', payload: { ...validPayload, recommendedFees: null } },
+    ])('should fail because recommendedFees is $scenario', ({ payload }) => {
+      const errors = expectInvalid(payload);
+      expectHasPath(errors, 'recommendedFees');
+    });
+    
+    it('should return errors for invalid or missing fee fields', () => {
+      const errors = expectInvalid({
+        ...validPayload,
+        recommendedFees: {
+          fastestFee: -1,
+          halfHourFee: 0,
+        },
+      });
+      
+      expectHasPath(errors, 'recommendedFees.fastestFee');
+      expectHasPath(errors, 'recommendedFees.halfHourFee');
+      expectHasPath(errors, 'recommendedFees.hourFee');
+      expectHasPath(errors, 'recommendedFees.minimumFee');
+      expectHasSomeMessage(errors, 'must be > 0');
+    });
   });
 });

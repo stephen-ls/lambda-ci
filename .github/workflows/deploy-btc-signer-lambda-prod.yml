@@ -20,8 +20,8 @@ jobs:
 
     env:
       AWS_REGION: ${{ secrets.AWS_REGION }}
-      AWS_SECRET_ID: ${{ secrets.AWS_BTC_SECRET_ID_PROD }}
       LAMBDA_FUNCTION_NAME: ${{ secrets.BTC_LAMBDA_NAME_PROD }}
+      BTC_SECRET_ID: ${{ secrets.BTC_SECRET_ID_PROD }}
       BTC_NETWORK: ${{ secrets.BTC_NETWORK_PROD }}
 
     steps:
@@ -62,7 +62,7 @@ jobs:
           
           aws lambda update-function-configuration \
           --function-name "$LAMBDA_FUNCTION_NAME" \
-          --environment "Variables={AWS_SECRET_ID=${AWS_SECRET_ID},BTC_NETWORK=${BTC_NETWORK}}"
+          --environment "Variables={BTC_SECRET_ID=${BTC_SECRET_ID},BTC_NETWORK=${BTC_NETWORK}}"
 
           aws lambda wait function-updated \
           --function-name "$LAMBDA_FUNCTION_NAME"

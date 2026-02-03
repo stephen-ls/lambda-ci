@@ -1,116 +1,60 @@
-import { PayBatchParams, PayBatchRecipient, UTXO } from 'src/types/pay-batch-params.type';
-import { IsPositiveOptions, ValidationResult } from 'src/types/validation';
-import { PaymentError } from 'src/errors/payment.error';
+import * as v from 'valibot';
 
 const MIN_PAYMENT_SAT = 546;
 
-export const isCondition = (
-  condition: boolean,
-  errorString: string,
-): ValidationResult => condition ? null : [errorString];
+const RecommendedFeesSchema = v.object({
+  fastestFee: v.pipe(v.number(), v.check((n) => n > 0, 'must be > 0')),
+  halfHourFee: v.pipe(v.number(), v.check((n) => n > 0, 'must be > 0')),
+  hourFee: v.pipe(v.number(), v.check((n) => n > 0, 'must be > 0')),
+  minimumFee: v.pipe(v.number(), v.check((n) => n > 0, 'must be > 0')),
+});
 
-export const isObject = (key: string, value: unknown): ValidationResult =>
-  isCondition(
-    typeof value === 'object' && value !== null && !Array.isArray(value),
-    `${key} must be an object`
-  )
+const UTXOSchema = v.object({
+  txid: v.pipe(v.string(), v.minLength(1)),
+  vout: v.pipe(v.number(), v.integer(), v.minValue(0)),
+  value: v.pipe(v.number(), v.integer(), v.minValue(1)),
+  confirmations: v.pipe(v.number(), v.integer(), v.minValue(0)),
+});
 
-export const isNonEmptyString = (key: string, value: unknown): ValidationResult =>
-  isCondition(
-    typeof value === 'string' && value.trim().length > 0,
-    `${key} must be an non-empty string`,
-  );
+const RecipientSchema = v.object({
+  address: v.pipe(v.string(), v.minLength(1)),
+  amount: v.pipe(v.number(), v.integer(), v.minValue(MIN_PAYMENT_SAT)),
+});
 
-export const isInteger = (key: string, value: unknown): ValidationResult =>
-  isCondition(
-    typeof value === 'number' && Number.isInteger(value),
-    `${key} must be an integer`,
-  );
+const PayBatchParamsSchema = v.object({
+  recipients: v.pipe(v.array(RecipientSchema), v.minLength(1)),
+  utxos: v.pipe(v.array(UTXOSchema), v.minLength(1)),
+  recommendedFees: RecommendedFeesSchema,
+});
 
-export const isPositive = (
-  key: string,
-  value: unknown,
-  options: IsPositiveOptions = {}
-): ValidationResult =>
-  isCondition(
-    typeof value === 'number' && (options.includeZero ? value >= 0 : value > 0),
-    `${key} must be a number ${options.includeZero ? '>=' : '>'} 0`,
-  );
-
-export const isNonEmptyRecordArray = <T>(
-  key: string,
-  items: unknown,
-  validationFn?: (item: T) => ValidationResult
-): ValidationResult => {
-  if (!Array.isArray(items) || items.length === 0) {
-    return [`${key} must be a non-empty array`];
-  } else if (validationFn) {
-    for (const item of items) {
-      const itemErrors = validationFn(item);
-      if (itemErrors) return itemErrors;
+function formatIssuePath(issue: any): string {
+  const path = issue?.path;
+  if (!Array.isArray(path) || path.length === 0) return '';
+  
+  let out = '';
+  for (const seg of path) {
+    const key = seg?.key;
+    
+    if (typeof key === 'number') {
+      out += `[${key}]`;
+    } else if (typeof key === 'string') {
+      out += out ? `.${key}` : key;
+    } else {
+      const s = String(key ?? '');
+      if (s) out += out ? `.${s}` : s;
     }
   }
   
-  return null;
+  return out;
 }
 
-export function validateRecommendedFees(feeEstimates: unknown): ValidationResult {
-  let errors: ValidationResult = isObject('recommendedFees', feeEstimates);
+export function validatePayBatchParams(data: unknown): string[] | null {
+  const result = v.safeParse(PayBatchParamsSchema, data);
   
-  return errors || ['fastestFee', 'halfHourFee', 'hourFee', 'minimumFee'].reduce<ValidationResult>((acc, key): ValidationResult => {
-    const currentErrors = isPositive(key, feeEstimates[key]);
-    return currentErrors ? (acc || []).concat(currentErrors) : acc;
-  }, null);
-}
-
-export function validateUTXO(utxo: unknown): ValidationResult {
-  let errors: ValidationResult = isObject('utxo', utxo);
-  if (errors) return errors;
+  if (result.success) return null;
   
-  const utxoObject = utxo as Partial<UTXO>
-  errors = ['vout', 'value', 'confirmations'].reduce<ValidationResult>((acc, key) => {
-    const currentErrors = isInteger(key, utxoObject[key]);
-    return currentErrors ? (acc || []).concat(currentErrors) : acc;
-  }, null)
-  
-  errors = (errors || []).concat([
-    isPositive('value', utxoObject.value),
-    isPositive('vout', utxoObject.vout, { includeZero: true }),
-    isPositive('confirmations', utxoObject.confirmations, { includeZero: true }),
-    isNonEmptyString('txid', utxoObject.txid),
-  ].filter(Boolean).flat());
-  
-  return errors.length ? errors : null;
-}
-
-export function validateRecipient(recipient: unknown): ValidationResult {
-  let errors: ValidationResult = isObject('recipient', recipient);
-  if (errors) return errors;
-  
-  const recipientObject = recipient as Partial<PayBatchRecipient>
-  errors = [
-    isNonEmptyString('address', recipientObject.address),
-    isInteger('amount', recipientObject.amount),
-    isPositive('amount', recipientObject.amount)
-  ].filter(Boolean).flat();
-  
-  if (recipientObject.amount < MIN_PAYMENT_SAT) {
-    errors.push('amount is below the minimum payment threshold');
-  }
-  
-  return errors.length ? errors : null;
-}
-
-export function validatePayBatchParams(data: unknown): ValidationResult {
-  let errors: ValidationResult = isObject('data', data);
-  if (errors) return errors;
-  
-  const dataObject = data as PayBatchParams;
-  errors = [
-    isNonEmptyRecordArray<PayBatchRecipient>('recipients', dataObject.recipients, validateRecipient),
-    isNonEmptyRecordArray<UTXO>('utxos', dataObject.utxos, validateUTXO),
-    validateRecommendedFees(dataObject.recommendedFees)
-  ].filter(Boolean).flat();
-  
-  return errors.length ? errors : null;
+  return result.issues.map((issue) => {
+    const p = formatIssuePath(issue);
+    return p ? `${p}: ${issue.message}` : issue.message;
+  });
 }
