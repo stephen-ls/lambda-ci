@@ -74,37 +74,37 @@ describe('Validation', () => {
       {
         scenario: 'recipients has primitive item',
         payload: { ...validPayload, recipients: [1] },
-        path: 'recipients[0]'
+        path: 'recipients.0'
       },
       {
         scenario: 'recipients has null item',
         payload: { ...validPayload, recipients: [null] },
-        path: 'recipients[0]'
+        path: 'recipients.0'
       },
       {
         scenario: 'recipients item address is empty string',
         payload: { ...validPayload, recipients: [{ address: '', amount: 1000 }] },
-        path: 'recipients[0].address'
+        path: 'recipients.0.address'
       },
       {
         scenario: 'recipients item address is not a string',
         payload: { ...validPayload, recipients: [{ address: 123, amount: 1000 }] },
-        path: 'recipients[0].address'
+        path: 'recipients.0.address'
       },
       {
         scenario: 'recipients item amount below MIN_PAYMENT_SAT',
         payload: { ...validPayload, recipients: [{ address: 123, amount: 100 }] },
-        path: 'recipients[0].amount'
+        path: 'recipients.0.amount'
       },
       {
         scenario: 'recipients item amount is not integer',
         payload: { ...validPayload, recipients: [{ address: 'addr', amount: 1.5 }] },
-        path: 'recipients[0].amount'
+        path: 'recipients.0.amount'
       },
       {
         scenario: 'recipients item amount is not a number',
         payload: { ...validPayload, recipients: [{ address: 'addr', amount: '1000' }] },
-        path: 'recipients[0].amount'
+        path: 'recipients.0.amount'
       }
     ])('should fail because $scenario', ({ payload, path }) => {
       const errors = expectInvalid(payload);
@@ -113,7 +113,7 @@ describe('Validation', () => {
     
     it('should fail because recipients item has missing fields', () => {
       const errors = expectInvalid({ ...validPayload, recipients: [{}] });
-      expect(errors.some((e) => e.startsWith('recipients[0].'))).toBe(true);
+      expect(errors.some((e) => e.startsWith('recipients.0.'))).toBe(true);
     });
   });
   
@@ -144,61 +144,61 @@ describe('Validation', () => {
       {
         scenario: 'utxos has primitive item',
         payload: { ...validPayload, utxos: [1] },
-        path: 'utxos[0]'
+        path: 'utxos.0'
       },
       {
         scenario: 'utxos has null item',
         payload: { ...validPayload, utxos: [null] },
-        path: 'utxos[0]'
+        path: 'utxos.0'
       },
       {
         scenario: 'utxos item txid is empty string',
         payload: { ...validPayload, utxos: [{ txid: '', vout: 0, value: 1000, confirmations: 1 }] },
-        path: 'utxos[0].txid'
+        path: 'utxos.0.txid'
       },
       {
         scenario: 'utxos item txid is not a string',
         payload: { ...validPayload, utxos: [{ txid: 123, vout: 0, value: 1000, confirmations: 1 }] },
-        path: 'utxos[0].txid'
+        path: 'utxos.0.txid'
       },
       {
         scenario: 'utxos item vout is negative',
         payload: { ...validPayload, utxos: [{ txid: 'tx', vout: -1, value: 1000, confirmations: 1 }] },
-        path: 'utxos[0].vout'
+        path: 'utxos.0.vout'
       },
       {
         scenario: 'utxos item vout is not integer',
         payload: { ...validPayload, utxos: [{ txid: 'tx', vout: 0.1, value: 1000, confirmations: 1 }] },
-        path: 'utxos[0].vout'
+        path: 'utxos.0.vout'
       },
       {
         scenario: 'utxos item confirmations is negative',
         payload: { ...validPayload, utxos: [{ txid: 'tx', vout: 0, value: 1000, confirmations: -1 }] },
-        path: 'utxos[0].confirmations'
+        path: 'utxos.0.confirmations'
       },
       {
         scenario: 'utxos item confirmations is not integer',
         payload: { ...validPayload, utxos: [{ txid: 'tx', vout: 0, value: 1000, confirmations: 0.1 }] },
-        path: 'utxos[0].confirmations'
+        path: 'utxos.0.confirmations'
       },
       {
         scenario: 'utxos item value is negative or equal to zero',
         payload: { ...validPayload, utxos: [{ txid: 'tx', vout: 0, value: 0, confirmations: 2 }] },
-        path: 'utxos[0].value'
+        path: 'utxos.0.value'
       },
       {
         scenario: 'utxos item value is not integer',
         payload: { ...validPayload, utxos: [{ txid: 'tx', vout: 0, value: 1000.5, confirmations: 2 }] },
-        path: 'utxos[0].value'
+        path: 'utxos.0.value'
       },
     ])('should fail because $scenario', ({ payload, path }) => {
       const errors = expectInvalid(payload);
       expectHasPath(errors, path);
     });
     
-    it('should fail because utxos[0] has missing fields', () => {
+    it('should fail because utxos.0 has missing fields', () => {
       const errors = expectInvalid({ ...validPayload, utxos: [{ txid: 'tx' }] });
-      expect(errors.some((e) => e.startsWith('utxos[0].'))).toBe(true);
+      expect(errors.some((e) => e.startsWith('utxos.0.'))).toBe(true);
     });
   });
   

@@ -1,6 +1,4 @@
-import * as bip39 from 'bip39';
 import { LocalStackHelper } from './utils/localstack.helper';
-
 
 export class TestLambda {
   private localStackHelper: LocalStackHelper;
@@ -15,14 +13,9 @@ export class TestLambda {
     await this.localStackHelper.createSecret(this.secretId, {
       BTC_MNEMONIC: mnemonic,
     });
-    process.env.AWS_ENDPOINT_URL = this.localStackHelper.getEndpoint();
   }
 
   async stop(): Promise<void> {
     await this.localStackHelper.deleteSecret(this.secretId);
-  }
-
-  getSecretId(): string {
-    return this.secretId;
   }
 }

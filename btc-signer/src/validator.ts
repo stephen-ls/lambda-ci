@@ -52,9 +52,7 @@ export function validatePayBatchParams(data: unknown): string[] | null {
   const result = v.safeParse(PayBatchParamsSchema, data);
   
   if (result.success) return null;
-  
   return result.issues.map((issue) => {
-    const p = formatIssuePath(issue);
-    return p ? `${p}: ${issue.message}` : issue.message;
+    return `${v.getDotPath(issue)}: ${issue.message}`
   });
 }
