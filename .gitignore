@@ -1,0 +1,14 @@
+btc-signer/dist
+
+btc-signer/node_modules
+npm-debug.log*
+
+btc-signer/.env
+
+.vscode/*
+.idea/
+.DS_Store
+
+btc-signer/function.zip
+
+.cursor/
