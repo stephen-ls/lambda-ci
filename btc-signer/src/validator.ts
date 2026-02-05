@@ -27,27 +27,6 @@ const PayBatchParamsSchema = v.object({
   recommendedFees: RecommendedFeesSchema,
 });
 
-function formatIssuePath(issue: any): string {
-  const path = issue?.path;
-  if (!Array.isArray(path) || path.length === 0) return '';
-  
-  let out = '';
-  for (const seg of path) {
-    const key = seg?.key;
-    
-    if (typeof key === 'number') {
-      out += `[${key}]`;
-    } else if (typeof key === 'string') {
-      out += out ? `.${key}` : key;
-    } else {
-      const s = String(key ?? '');
-      if (s) out += out ? `.${s}` : s;
-    }
-  }
-  
-  return out;
-}
-
 export function validatePayBatchParams(data: unknown): string[] | null {
   const result = v.safeParse(PayBatchParamsSchema, data);
   
