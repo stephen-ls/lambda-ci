@@ -33,6 +33,42 @@ else
   echo "🔒 Created $VENDOR_LOCK (commit this for reproducible updates)."
 fi
 
+echo "🔎 Running npm audit (fail on high)..."
+
+AUDIT_JSON="$(cd "$TMP_DIR" && npm audit --ignore-scripts --json 2>/dev/null || true)"
+
+if [ -z "$AUDIT_JSON" ]; then
+  echo "❌ npm audit failed or returned empty output."
+  exit 1
+fi
+
+HIGH_CNT="$(printf '%s' "$AUDIT_JSON" | node -e '
+  let s = "";
+  process.stdin.on("data", d => s += d);
+  process.stdin.on("end", () => {
+    try {
+      const j = JSON.parse(s);
+      const v = j.metadata?.vulnerabilities || {};
+      console.log((v.high || 0) + (v.critical || 0));
+    } catch {
+      console.log("PARSE_ERROR");
+    }
+  });
+')"
+
+if [ "$HIGH_CNT" = "PARSE_ERROR" ]; then
+  echo "❌ Failed to parse npm audit JSON."
+  exit 1
+fi
+
+if [ "$HIGH_CNT" -gt 0 ]; then
+  echo "❌ npm audit found $HIGH_CNT high/critical vulnerabilities."
+  (cd "$TMP_DIR" && npm audit --ignore-scripts --audit-level=high) || true
+  exit 1
+fi
+
+echo "✅ npm audit OK."
+
 echo "📁 Moving to libs folder..."
 mkdir -p libs
 cp -R "$TMP_DIR/node_modules"/* libs/
