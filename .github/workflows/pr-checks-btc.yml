@@ -23,6 +23,7 @@ jobs:
         with:
           node-version: '22.14.0'
           cache: 'npm'
+          cache-dependency-path: btc-signer/package-lock.json
 
       - name: Install dependencies
         working-directory: ./btc-signer
