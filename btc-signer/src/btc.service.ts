@@ -77,10 +77,13 @@ export class BitcoinService {
 
       psbt.signAllInputs(this.signer);
       psbt.finalizeAllInputs();
-      const txHex = psbt.extractTransaction().toHex();
+      const extracted = psbt.extractTransaction();
+      const txHex = extracted.toHex();
+      const txId = extracted.getId();
 
       return {
         txHex,
+        txId,
         recipientCount: recipients.length,
         fee,
         totalAmount,
