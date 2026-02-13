@@ -5,6 +5,7 @@ export const successfulResponseSchema = {
       type: 'object',
       properties: {
         txHex: { type: 'string' },
+        txId: { type: 'string' },
         recipientCount: { type: 'integer' },
         totalAmount: { type: 'integer' },
         fee: { type: 'integer' },
