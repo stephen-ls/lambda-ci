@@ -71,9 +71,15 @@ export class BitcoinService {
         totalAmount += recipient.amount;
       }
       
+      console.log('Pay params validated');
+      
       const { change, fee } = this.estimateChangeAndFeeOrFail(params);
+      
+      console.log('Fee is estimated');
 
       const psbt = this.buildTransaction(utxos, recipients, change);
+      
+      console.log('Transactions is built');
 
       psbt.signAllInputs(this.signer);
       psbt.finalizeAllInputs();
@@ -90,6 +96,7 @@ export class BitcoinService {
         walletAddress: this.walletAddress
       };
     } catch (error) {
+      console.log('Error inside service');
       if (error instanceof PaymentError) {
         throw error;
       }
