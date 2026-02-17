@@ -58,6 +58,7 @@ class BtcPaymentLambda {
       
       return { result: payBatchResult };
     } catch (error) {
+      console.log(error);
       return { error: [error instanceof PaymentError ? error.message : 'Unknown error'] };
     }
   }
