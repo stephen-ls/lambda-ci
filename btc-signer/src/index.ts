@@ -48,16 +48,22 @@ class BtcPaymentLambda {
         return { error: ['SecretString is empty, expected JSON in SecretString'] }
       }
       
+      console.log('Secrets are here');
+      
       const { BTC_MNEMONIC } = JSON.parse(secrets.SecretString) as SecretJson;
       const btcService = new BitcoinService({
         mnemonic: BTC_MNEMONIC,
         network: this.network,
       });
       
+      console.log('Secrets are parsed');
+      
       const payBatchResult = btcService.createAndSignTransaction(data);
+      console.log('Signed successfully');
       
       return { result: payBatchResult };
     } catch (error) {
+      console.log('Error inside index');
       console.log(error);
       return { error: [error instanceof PaymentError ? error.message : 'Unknown error'] };
     }

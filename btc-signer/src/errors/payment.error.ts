@@ -4,6 +4,7 @@ export class PaymentError extends Error {
   readonly value: any;
 
   constructor(message?: string, value?: Record<string, unknown>) {
+    console.log('Payment error message', message);
     super(message);
     this.value = value;
     
